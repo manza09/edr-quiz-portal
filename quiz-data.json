@@ -1,0 +1,292 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "password": "$2a$10$U9qsjTSGM76egjDJO2YNl.DBrVUR.1qVJbdhISOtb.7gCC0wrWFHq",
+      "role": "admin"
+    },
+    {
+      "id": 2,
+      "username": "Manza",
+      "password": "$2a$10$S0bCxMMtExHUMk2pf.97qOkb4N7B1XbtyYS/pQEpG4s99hS8NbfFu",
+      "role": "user"
+    }
+  ],
+  "quiz_sets": [
+    {
+      "id": 1,
+      "title": "EDR and Hardening Basics",
+      "created_at": "2026-06-24T16:44:28.629Z"
+    }
+  ],
+  "questions": [
+    {
+      "id": 1,
+      "set_id": 1,
+      "prompt": "What is Endpoint Detection and Response (EDR), and how does it differ from traditional antivirus?",
+      "option_a": "EDR only scans files once per month",
+      "option_b": "EDR relies only on virus signatures like antivirus",
+      "option_c": "EDR provides continuous monitoring and behavioral detection, unlike traditional antivirus",
+      "option_d": "EDR only works offline",
+      "answer": "C"
+    },
+    {
+      "id": 2,
+      "set_id": 1,
+      "prompt": "Which detection method in EDR focuses on analyzing unusual program behavior instead of known signatures?",
+      "option_a": "Signature-based detection",
+      "option_b": "Behavioral analysis",
+      "option_c": "Firewall filtering",
+      "option_d": "Packet switching",
+      "answer": "B"
+    },
+    {
+      "id": 3,
+      "set_id": 1,
+      "prompt": "What is the role of threat hunting in EDR systems?",
+      "option_a": "Automatically deleting all files",
+      "option_b": "Proactively searching for hidden or advanced threats",
+      "option_c": "Blocking internet access permanently",
+      "option_d": "Installing antivirus updates",
+      "answer": "B"
+    },
+    {
+      "id": 4,
+      "set_id": 1,
+      "prompt": "How does EDR integrate into an XDR architecture?",
+      "option_a": "It replaces firewalls completely",
+      "option_b": "It works independently without sharing data",
+      "option_c": "It integrates with other security tools for unified detection and response",
+      "option_d": "It disables endpoint monitoring",
+      "answer": "C"
+    },
+    {
+      "id": 5,
+      "set_id": 1,
+      "prompt": "What is the purpose of using CIS Benchmarks or DISA STIGs in OS hardening?",
+      "option_a": "To improve gaming performance",
+      "option_b": "To standardize secure system configuration practices",
+      "option_c": "To install software automatically",
+      "option_d": "To increase internet speed",
+      "answer": "B"
+    },
+    {
+      "id": 6,
+      "set_id": 1,
+      "prompt": "Which is an example of account management hardening in Windows or Linux?",
+      "option_a": "Installing games for admin users",
+      "option_b": "Enabling guest accounts for all users",
+      "option_c": "Removing unused accounts and enforcing strong passwords",
+      "option_d": "Disabling all security updates",
+      "answer": "C"
+    },
+    {
+      "id": 7,
+      "set_id": 1,
+      "prompt": "What is a common mobile threat vector for Android and iOS devices?",
+      "option_a": "Printer malfunction",
+      "option_b": "Malicious apps from untrusted sources",
+      "option_c": "Keyboard errors",
+      "option_d": "Battery overheating only",
+      "answer": "B"
+    },
+    {
+      "id": 8,
+      "set_id": 1,
+      "prompt": "What is the main purpose of Mobile Device Management (MDM)?",
+      "option_a": "To increase battery life",
+      "option_b": "To manage and enforce security policies on mobile devices",
+      "option_c": "To speed up mobile games",
+      "option_d": "To replace mobile operating systems",
+      "answer": "B"
+    },
+    {
+      "id": 9,
+      "set_id": 1,
+      "prompt": "What is a key security feature of BYOD programs?",
+      "option_a": "Allowing full access to all personal data",
+      "option_b": "Removing all encryption",
+      "option_c": "Containerization for separating personal and work data",
+      "option_d": "Disabling passwords for convenience",
+      "answer": "C"
+    },
+    {
+      "id": 10,
+      "set_id": 1,
+      "prompt": "How does Full Disk Encryption (BitLocker or LUKS) protect data?",
+      "option_a": "It deletes unused files automatically",
+      "option_b": "It compresses all files for faster access",
+      "option_c": "It encrypts all disk data to prevent unauthorized access",
+      "option_d": "It only encrypts internet traffic",
+      "answer": "C"
+    }
+  ],
+  "quiz_attempts": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "set_id": 1,
+      "score": 40,
+      "correct_count": 4,
+      "submitted_at": "2026-06-24T16:49:12.376Z"
+    },
+    {
+      "id": 2,
+      "user_id": 2,
+      "set_id": 1,
+      "score": 70,
+      "correct_count": 7,
+      "submitted_at": "2026-06-24T16:50:10.740Z"
+    }
+  ],
+  "quiz_answers": [
+    {
+      "id": 1,
+      "attempt_id": 1,
+      "question_id": 1,
+      "selected_option": "A",
+      "correct": 0
+    },
+    {
+      "id": 2,
+      "attempt_id": 1,
+      "question_id": 2,
+      "selected_option": "B",
+      "correct": 1
+    },
+    {
+      "id": 3,
+      "attempt_id": 1,
+      "question_id": 3,
+      "selected_option": "C",
+      "correct": 0
+    },
+    {
+      "id": 4,
+      "attempt_id": 1,
+      "question_id": 4,
+      "selected_option": "C",
+      "correct": 1
+    },
+    {
+      "id": 5,
+      "attempt_id": 1,
+      "question_id": 5,
+      "selected_option": "A",
+      "correct": 0
+    },
+    {
+      "id": 6,
+      "attempt_id": 1,
+      "question_id": 6,
+      "selected_option": "B",
+      "correct": 0
+    },
+    {
+      "id": 7,
+      "attempt_id": 1,
+      "question_id": 7,
+      "selected_option": "C",
+      "correct": 0
+    },
+    {
+      "id": 8,
+      "attempt_id": 1,
+      "question_id": 8,
+      "selected_option": "B",
+      "correct": 1
+    },
+    {
+      "id": 9,
+      "attempt_id": 1,
+      "question_id": 9,
+      "selected_option": "C",
+      "correct": 1
+    },
+    {
+      "id": 10,
+      "attempt_id": 1,
+      "question_id": 10,
+      "selected_option": "A",
+      "correct": 0
+    },
+    {
+      "id": 11,
+      "attempt_id": 2,
+      "question_id": 1,
+      "selected_option": "C",
+      "correct": 1
+    },
+    {
+      "id": 12,
+      "attempt_id": 2,
+      "question_id": 2,
+      "selected_option": "A",
+      "correct": 0
+    },
+    {
+      "id": 13,
+      "attempt_id": 2,
+      "question_id": 3,
+      "selected_option": "B",
+      "correct": 1
+    },
+    {
+      "id": 14,
+      "attempt_id": 2,
+      "question_id": 4,
+      "selected_option": "C",
+      "correct": 1
+    },
+    {
+      "id": 15,
+      "attempt_id": 2,
+      "question_id": 5,
+      "selected_option": "B",
+      "correct": 1
+    },
+    {
+      "id": 16,
+      "attempt_id": 2,
+      "question_id": 6,
+      "selected_option": "C",
+      "correct": 1
+    },
+    {
+      "id": 17,
+      "attempt_id": 2,
+      "question_id": 7,
+      "selected_option": "A",
+      "correct": 0
+    },
+    {
+      "id": 18,
+      "attempt_id": 2,
+      "question_id": 8,
+      "selected_option": "B",
+      "correct": 1
+    },
+    {
+      "id": 19,
+      "attempt_id": 2,
+      "question_id": 9,
+      "selected_option": "D",
+      "correct": 0
+    },
+    {
+      "id": 20,
+      "attempt_id": 2,
+      "question_id": 10,
+      "selected_option": "C",
+      "correct": 1
+    }
+  ],
+  "nextIds": {
+    "users": 3,
+    "quiz_sets": 2,
+    "questions": 11,
+    "quiz_attempts": 3,
+    "quiz_answers": 21
+  }
+}

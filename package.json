@@ -1,0 +1,17 @@
+{
+  "name": "quiz-app",
+  "version": "1.0.0",
+  "description": "Full stack quiz website with admin leaderboard and question set management.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.18.4",
+    "express-session": "^1.17.4",
+    "session-file-store": "^1.5.0",
+    "sqlite3": "^5.1.6"
+  }
+}
