@@ -1,16 +1,14 @@
 const path = require('path');
-const bcrypt = require('bcryptjs');
 const sqlite3 = require('sqlite3').verbose();
 
 const dbFile = path.join(__dirname, 'quiz.db');
 const db = new sqlite3.Database(dbFile);
 
+// ------------------ PROMISE WRAPPERS ------------------
 function run(sql, params = []) {
   return new Promise((resolve, reject) => {
     db.run(sql, params, function (err) {
-      if (err) {
-        return reject(err);
-      }
+      if (err) return reject(err);
       resolve(this);
     });
   });
@@ -19,9 +17,7 @@ function run(sql, params = []) {
 function get(sql, params = []) {
   return new Promise((resolve, reject) => {
     db.get(sql, params, (err, row) => {
-      if (err) {
-        return reject(err);
-      }
+      if (err) return reject(err);
       resolve(row);
     });
   });
@@ -30,14 +26,13 @@ function get(sql, params = []) {
 function all(sql, params = []) {
   return new Promise((resolve, reject) => {
     db.all(sql, params, (err, rows) => {
-      if (err) {
-        return reject(err);
-      }
+      if (err) return reject(err);
       resolve(rows);
     });
   });
 }
 
+// ------------------ INIT DATABASE ------------------
 async function init() {
   await run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -85,15 +80,34 @@ async function init() {
     FOREIGN KEY (question_id) REFERENCES questions(id)
   )`);
 
-  const adminUser = await get('SELECT id FROM users WHERE username = ?', ['admin']);
+  // ------------------ ADMIN SEED ------------------
+  const adminUser = await get(
+    'SELECT id FROM users WHERE username = ?',
+    ['admin']
+  );
+
   if (!adminUser) {
+    const bcrypt = require('bcryptjs');
     const passwordHash = bcrypt.hashSync('admin123', 10);
-    await run('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', ['admin', passwordHash, 'admin']);
+
+    await run(
+      'INSERT INTO users (username, password, role) VALUES (?, ?, ?)',
+      ['admin', passwordHash, 'admin']
+    );
   }
 
-  const existingSet = await get('SELECT id FROM quiz_sets WHERE title = ?', ['EDR and Hardening Basics']);
+  // ------------------ DEFAULT QUIZ SEED ------------------
+  const existingSet = await get(
+    'SELECT id FROM quiz_sets WHERE title = ?',
+    ['EDR and Hardening Basics']
+  );
+
   if (!existingSet) {
-    const insertSet = await run('INSERT INTO quiz_sets (title) VALUES (?)', ['EDR and Hardening Basics']);
+    const insertSet = await run(
+      'INSERT INTO quiz_sets (title) VALUES (?)',
+      ['EDR and Hardening Basics']
+    );
+
     const setId = insertSet.lastID;
 
     const questions = [
@@ -136,98 +150,103 @@ async function init() {
         option_c: 'To install software automatically',
         option_d: 'To increase internet speed',
         answer: 'B'
-      },
-      {
-        prompt: 'Which is an example of account management hardening in Windows or Linux?',
-        option_a: 'Installing games for admin users',
-        option_b: 'Enabling guest accounts for all users',
-        option_c: 'Removing unused accounts and enforcing strong passwords',
-        option_d: 'Disabling all security updates',
-        answer: 'C'
-      },
-      {
-        prompt: 'What is a common mobile threat vector for Android and iOS devices?',
-        option_a: 'Printer malfunction',
-        option_b: 'Malicious apps from untrusted sources',
-        option_c: 'Keyboard errors',
-        option_d: 'Battery overheating only',
-        answer: 'B'
-      },
-      {
-        prompt: 'What is the main purpose of Mobile Device Management (MDM)?',
-        option_a: 'To increase battery life',
-        option_b: 'To manage and enforce security policies on mobile devices',
-        option_c: 'To speed up mobile games',
-        option_d: 'To replace mobile operating systems',
-        answer: 'B'
-      },
-      {
-        prompt: 'What is a key security feature of BYOD programs?',
-        option_a: 'Allowing full access to all personal data',
-        option_b: 'Removing all encryption',
-        option_c: 'Containerization for separating personal and work data',
-        option_d: 'Disabling passwords for convenience',
-        answer: 'C'
-      },
-      {
-        prompt: 'How does Full Disk Encryption (BitLocker or LUKS) protect data?',
-        option_a: 'It deletes unused files automatically',
-        option_b: 'It compresses all files for faster access',
-        option_c: 'It encrypts all disk data to prevent unauthorized access',
-        option_d: 'It only encrypts internet traffic',
-        answer: 'C'
       }
     ];
 
-    const insertQuestion = 'INSERT INTO questions (set_id, prompt, option_a, option_b, option_c, option_d, answer) VALUES (?, ?, ?, ?, ?, ?, ?)';
-    for (const question of questions) {
-      await run(insertQuestion, [setId, question.prompt, question.option_a, question.option_b, question.option_c, question.option_d, question.answer]);
+    const insertQuestion =
+      'INSERT INTO questions (set_id, prompt, option_a, option_b, option_c, option_d, answer) VALUES (?, ?, ?, ?, ?, ?, ?)';
+
+    for (const q of questions) {
+      await run(insertQuestion, [
+        setId,
+        q.prompt,
+        q.option_a,
+        q.option_b,
+        q.option_c,
+        q.option_d,
+        q.answer
+      ]);
     }
   }
 }
 
+// ------------------ USER FUNCTIONS ------------------
 async function getUserByUsername(username) {
-  return get('SELECT id, username, password, role FROM users WHERE username = ?', [username]);
+  return get(
+    'SELECT id, username, password, role FROM users WHERE username = ?',
+    [username]
+  );
 }
 
 async function getUserById(id) {
-  return get('SELECT id, username, role FROM users WHERE id = ?', [id]);
+  return get(
+    'SELECT id, username, role FROM users WHERE id = ?',
+    [id]
+  );
 }
 
 async function createUser(username, password, role = 'user') {
-  const result = await run('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [username, password, role]);
+  const result = await run(
+    'INSERT INTO users (username, password, role) VALUES (?, ?, ?)',
+    [username, password, role]
+  );
+
   return { id: result.lastID, username, role };
 }
 
 async function updateUserPassword(id, password) {
-  await run('UPDATE users SET password = ? WHERE id = ?', [password, id]);
+  await run(
+    'UPDATE users SET password = ? WHERE id = ?',
+    [password, id]
+  );
 }
 
+// ------------------ QUIZ FUNCTIONS ------------------
 async function getQuizSets() {
-  return all('SELECT id, title, created_at FROM quiz_sets ORDER BY id');
+  return all(
+    'SELECT id, title, created_at FROM quiz_sets ORDER BY id'
+  );
 }
 
 async function getQuizSetById(id) {
-  return get('SELECT id, title, created_at FROM quiz_sets WHERE id = ?', [id]);
+  return get(
+    'SELECT id, title, created_at FROM quiz_sets WHERE id = ?',
+    [id]
+  );
 }
 
 async function getQuestionsBySetId(setId) {
-  return all('SELECT id, prompt, option_a, option_b, option_c, option_d, answer FROM questions WHERE set_id = ? ORDER BY id', [setId]);
-}
-
-async function getQuestionById(id) {
-  return get('SELECT id, prompt, option_a, option_b, option_c, option_d, answer FROM questions WHERE id = ?', [id]);
+  return all(
+    'SELECT id, prompt, option_a, option_b, option_c, option_d, answer FROM questions WHERE set_id = ? ORDER BY id',
+    [setId]
+  );
 }
 
 async function insertQuizSet(title) {
-  const result = await run('INSERT INTO quiz_sets (title, created_at) VALUES (?, ?)', [title, new Date().toISOString()]);
-  return { id: result.lastID, title, created_at: new Date().toISOString() };
+  const result = await run(
+    'INSERT INTO quiz_sets (title, created_at) VALUES (?, ?)',
+    [title, new Date().toISOString()]
+  );
+
+  return {
+    id: result.lastID,
+    title,
+    created_at: new Date().toISOString()
+  };
 }
 
 async function insertQuestion(setId, question) {
   return run(
     'INSERT INTO questions (set_id, prompt, option_a, option_b, option_c, option_d, answer) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [setId, question.prompt, question.option_a, question.option_b, question.option_c, question.option_d, question.answer]
+    [
+      setId,
+      question.prompt,
+      question.option_a,
+      question.option_b,
+      question.option_c,
+      question.option_d,
+      question.answer
+    ]
   );
 }
 
@@ -236,44 +255,49 @@ async function insertQuizAttempt(userId, setId, score, correctCount) {
     'INSERT INTO quiz_attempts (user_id, set_id, score, correct_count, submitted_at) VALUES (?, ?, ?, ?, ?)',
     [userId, setId, score, correctCount, new Date().toISOString()]
   );
+
   return { id: result.lastID };
 }
 
 async function insertQuizAnswer(attemptId, questionId, selectedOption, correct) {
-  await run('INSERT INTO quiz_answers (attempt_id, question_id, selected_option, correct) VALUES (?, ?, ?, ?)', [attemptId, questionId, selectedOption, correct ? 1 : 0]);
+  await run(
+    'INSERT INTO quiz_answers (attempt_id, question_id, selected_option, correct) VALUES (?, ?, ?, ?)',
+    [attemptId, questionId, selectedOption, correct ? 1 : 0]
+  );
 }
 
+// ------------------ ADMIN ------------------
 async function getLeaderboard() {
-  return all(
-    `SELECT a.id, u.username, s.title AS quiz_title, a.score, a.correct_count, a.submitted_at
-       FROM quiz_attempts a
-       JOIN users u ON u.id = a.user_id
-       JOIN quiz_sets s ON s.id = a.set_id
-       ORDER BY a.score DESC, a.submitted_at ASC
-       LIMIT 20`,
-    []
-  );
+  return all(`
+    SELECT a.id, u.username, s.title AS quiz_title,
+           a.score, a.correct_count, a.submitted_at
+    FROM quiz_attempts a
+    JOIN users u ON u.id = a.user_id
+    JOIN quiz_sets s ON s.id = a.set_id
+    ORDER BY a.score DESC, a.submitted_at ASC
+    LIMIT 20
+  `);
 }
 
 async function getAdminAttempts() {
-  return all(
-    `SELECT a.id, u.username, s.title AS quiz_title, a.score, a.correct_count, a.submitted_at
-       FROM quiz_attempts a
-       JOIN users u ON u.id = a.user_id
-       JOIN quiz_sets s ON s.id = a.set_id
-       ORDER BY a.submitted_at DESC`,
-    []
-  );
+  return all(`
+    SELECT a.id, u.username, s.title AS quiz_title,
+           a.score, a.correct_count, a.submitted_at
+    FROM quiz_attempts a
+    JOIN users u ON u.id = a.user_id
+    JOIN quiz_sets s ON s.id = a.set_id
+    ORDER BY a.submitted_at DESC
+  `);
 }
 
 async function getAdminAttemptDetails() {
-  return all(
-    `SELECT qa.attempt_id, q.prompt, qa.selected_option, qa.correct
-       FROM quiz_answers qa
-       JOIN questions q ON q.id = qa.question_id
-       ORDER BY qa.attempt_id, qa.id`,
-    []
-  );
+  return all(`
+    SELECT qa.attempt_id, q.prompt,
+           qa.selected_option, qa.correct
+    FROM quiz_answers qa
+    JOIN questions q ON q.id = qa.question_id
+    ORDER BY qa.attempt_id, qa.id
+  `);
 }
 
 async function resetLeaderboard() {
@@ -281,6 +305,7 @@ async function resetLeaderboard() {
   await run('DELETE FROM quiz_attempts');
 }
 
+// ------------------ EXPORTS ------------------
 module.exports = {
   init,
   getUserByUsername,
@@ -290,7 +315,6 @@ module.exports = {
   getQuizSets,
   getQuizSetById,
   getQuestionsBySetId,
-  getQuestionById,
   insertQuizSet,
   insertQuestion,
   insertQuizAttempt,
