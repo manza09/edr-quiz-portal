@@ -3,7 +3,23 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const session = require('express-session');
 const FileStore = require('session-file-store')(session);
-const db = require('./db');
+let db;
+try {
+  db = require('./db');
+} catch (err) {
+  try {
+    const fs = require('fs');
+    console.error('Failed to require ./db');
+    console.error('Error:', err && err.stack ? err.stack : err);
+    console.error('process.cwd():', process.cwd());
+    console.error('__dirname:', __dirname);
+    console.error('Files in __dirname:', fs.readdirSync(__dirname));
+    console.error('Files in process.cwd():', fs.readdirSync(process.cwd()));
+  } catch (e) {
+    console.error('Additional diagnostics failed', e);
+  }
+  throw err;
+}
 
 const app = express();
 const port = process.env.PORT || 4000;

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EDR Quiz Portal</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>EDR &amp; Security Quiz Portal</h1>
+    <p>Login, answer timed questions, and track leaderboard performance.</p>
+  </header>
+  <main>
+    <div class="card" id="authCard">
+      <div class="status-row">
+        <h2 id="authTitle">Welcome back</h2>
+        <div class="action-group">
+          <button class="secondary" id="toggleAuthBtn">Register</button>
+        </div>
+      </div>
+      <form id="authForm">
+        <label for="username">Username</label>
+        <input id="username" name="username" autocomplete="username" required />
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required />
+        <div class="form-actions">
+          <button type="submit" class="btn" id="authSubmitBtn">Sign in</button>
+        </div>
+        <p id="authMessage" style="color: var(--danger);"></p>
+      </form>
+    </div>
+
+    <div class="navbar hidden" id="appNav">
+      <button class="secondary" data-view="home">Home</button>
+      <button class="secondary" data-view="leaderboard">Leaderboard</button>
+      <button class="secondary hidden" data-view="admin" id="adminNavBtn">Admin</button>
+      <button class="danger" id="logoutBtn">Logout</button>
+    </div>
+
+    <div id="homeView" class="card hidden">
+      <div class="status-row">
+        <div>
+          <h2>Quiz selection</h2>
+          <p>Choose a quiz set and answer questions within 10 seconds each.</p>
+        </div>
+        <div class="status-pill" id="welcomeUser"></div>
+      </div>
+      <div id="quizList" class="list-grid"></div>
+      <div id="quizPlayer" class="hidden">
+        <div class="status-row">
+          <div>
+            <h2 id="quizTitle">Quiz</h2>
+            <p id="questionProgress"></p>
+          </div>
+          <div class="status-pill">Time left: <span id="timerValue">10</span>s</div>
+        </div>
+        <div class="quiz-question">
+          <p id="questionPrompt"></p>
+          <div class="option-grid" id="optionsGrid"></div>
+        </div>
+        <div class="form-actions" style="margin-top: 18px;">
+          <button class="secondary" id="skipQuestionBtn">Skip / Next</button>
+        </div>
+      </div>
+      <div id="quizResult" class="card hidden">
+        <h2>Quiz complete</h2>
+        <p id="resultText"></p>
+        <div class="form-actions">
+          <button class="btn" id="restartQuizBtn">Return to quiz list</button>
+          <button class="secondary" id="viewLeaderboardBtn">View leaderboard</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="leaderboardView" class="card hidden">
+      <h2>Leaderboard</h2>
+      <p>Top quiz performance is shown below.</p>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Quiz</th>
+              <th>Score</th>
+              <th>Correct</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="adminView" class="card hidden">
+      <h2>Admin Dashboard</h2>
+      <p>Manage quiz sets, review answer history, and reset the leaderboard.</p>
+      <div class="form-actions" style="margin-bottom: 18px; gap: 12px; display: flex; flex-wrap: wrap;">
+        <button class="danger" id="resetLeaderboardBtn">Reset Leaderboard</button>
+      </div>
+      <div class="card">
+        <h3>Add a new quiz set</h3>
+        <form id="addSetForm">
+          <label for="setTitle">Quiz Title</label>
+          <input id="setTitle" required placeholder="Example: Mobile Security Basics" />
+          <div id="questionInputs"></div>
+          <div class="form-actions">
+            <button type="button" class="secondary" id="populateDefaultBtn">Load 10 sample questions</button>
+            <button type="submit" class="btn">Save quiz set</button>
+          </div>
+          <p id="adminMessage" style="color: var(--danger);"></p>
+        </form>
+      </div>
+      <div class="card">
+        <h3>Answer history</h3>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Quiz</th>
+                <th>Score</th>
+                <th>Correct</th>
+                <th>Submitted</th>
+              </tr>
+            </thead>
+            <tbody id="attemptsTable"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Answer details</h3>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Attempt</th>
+                <th>Question</th>
+                <th>Selected</th>
+                <th>Correct</th>
+              </tr>
+            </thead>
+            <tbody id="attemptDetailsTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer>
+    <small>Quiz portal with timed questions and admin management.</small>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>

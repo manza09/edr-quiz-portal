@@ -1,0 +1,149 @@
+:root {
+  --bg: #eef6ff;
+  --surface: #ffffff;
+  --primary: #0f4c81;
+  --accent: #2f73b5;
+  --text: #1d2939;
+  --muted: #64748b;
+  --danger: #d92d20;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  background: radial-gradient(circle at top, #f3f8ff, #eef6ff 45%, #dbeafe);
+  color: var(--text);
+}
+
+header,
+main,
+footer {
+  width: min(1080px, 100%);
+  margin: 0 auto;
+  padding: 20px;
+}
+
+header {
+  text-align: center;
+  padding-top: 36px;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2rem, 3vw, 3rem);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid rgba(15, 76, 129, 0.08);
+  border-radius: 20px;
+  box-shadow: 0 16px 40px rgba(15, 76, 129, 0.08);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.status-row,
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.status-pill {
+  background: rgba(15, 76, 129, 0.08);
+  color: var(--primary);
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-size: 0.95rem;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  border: none;
+  border-radius: 12px;
+  padding: 12px 18px;
+  cursor: pointer;
+}
+
+button.btn {
+  background: var(--primary);
+  color: white;
+}
+
+button.secondary {
+  background: rgba(15, 76, 129, 0.08);
+  color: var(--primary);
+}
+
+button.danger {
+  background: var(--danger);
+  color: white;
+}
+
+.form-actions {
+  justify-content: flex-start;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  border: 1px solid rgba(15, 76, 129, 0.16);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #fff;
+}
+
+label,
+p {
+  margin: 0 0 8px;
+}
+
+.option-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.option-button {
+  width: 100%;
+  border-radius: 16px;
+  background: rgba(15, 76, 129, 0.06);
+}
+
+.hidden {
+  display: none !important;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 12px;
+  border-bottom: 1px solid rgba(15, 76, 129, 0.08);
+}
+
+footer {
+  text-align: center;
+  padding: 18px 0 40px;
+  color: var(--muted);
+}
