@@ -2,51 +2,50 @@ const express = require('express');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const session = require('express-session');
-const FileStore = require('session-file-store')(session);
+
 let db;
 try {
   db = require('./db');
 } catch (err) {
-  try {
-    const fs = require('fs');
-    console.error('Failed to require ./db');
-    console.error('Error:', err && err.stack ? err.stack : err);
-    console.error('process.cwd():', process.cwd());
-    console.error('__dirname:', __dirname);
-    console.error('Files in __dirname:', fs.readdirSync(__dirname));
-    console.error('Files in process.cwd():', fs.readdirSync(process.cwd()));
-  } catch (e) {
-    console.error('Additional diagnostics failed', e);
-  }
+  console.error('Failed to load db:', err);
   throw err;
 }
 
 const app = express();
 const port = process.env.PORT || 4000;
-const sessionSecret = process.env.SESSION_SECRET || 'quiz-secret-key';
+
 const isProduction = process.env.NODE_ENV === 'production';
 const QUESTION_TIMEOUT_SECONDS = 10;
 
+/* ========================
+   RENDER FIX
+======================== */
+app.set('trust proxy', 1);
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(session({
-  store: new FileStore({
-    path: path.join(__dirname, 'sessions'),
-    retries: 1,
-    ttl: 24 * 60 * 60
-  }),
-  secret: sessionSecret,
-  resave: false,
-  saveUninitialized: false,
-  rolling: true,
-  cookie: {
-    maxAge: 24 * 60 * 60 * 1000,
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: isProduction
-  }
-}));
 
+/* ========================
+   SESSION (FIXED FOR RENDER)
+======================== */
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'quiz-secret-key',
+    resave: false,
+    saveUninitialized: false,
+
+    cookie: {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: isProduction, // IMPORTANT for Render HTTPS
+      maxAge: 24 * 60 * 60 * 1000
+    }
+  })
+);
+
+/* ========================
+   AUTH MIDDLEWARE
+======================== */
 function auth(req, res, next) {
   if (!req.session.user) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -61,226 +60,206 @@ function adminOnly(req, res, next) {
   next();
 }
 
+/* ========================
+   AUTH ROUTES
+======================== */
 app.post('/api/register', async (req, res) => {
   try {
     const { username, password } = req.body;
+
     if (!username || !password || password.length < 8) {
-      return res.status(400).json({ error: 'Username and password are required. Password must be at least 8 characters.' });
+      return res.status(400).json({
+        error: 'Username and password required (min 8 chars)'
+      });
     }
 
     const existing = await db.getUserByUsername(username);
     if (existing) {
-      return res.status(409).json({ error: 'Username already exists.' });
+      return res.status(409).json({ error: 'Username already exists' });
     }
 
-    const passwordHash = bcrypt.hashSync(password, 10);
-    const user = await db.createUser(username, passwordHash);
-    req.session.user = { id: user.id, username: user.username, role: user.role };
-    res.json({ id: user.id, username: user.username, role: user.role });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to register user.' });
+    const hash = bcrypt.hashSync(password, 10);
+    const user = await db.createUser(username, hash);
+
+    req.session.user = {
+      id: user.id,
+      username: user.username,
+      role: user.role
+    };
+
+    res.json(req.session.user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Register failed' });
   }
 });
 
 app.post('/api/login', async (req, res) => {
   try {
     const { username, password } = req.body;
+
     const user = await db.getUserByUsername(username);
     if (!user || !bcrypt.compareSync(password, user.password)) {
-      return res.status(401).json({ error: 'Invalid username or password.' });
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     req.session.regenerate((err) => {
-      if (err) {
-        return res.status(500).json({ error: 'Failed to regenerate session.' });
-      }
-      req.session.user = { id: user.id, username: user.username, role: user.role };
-      res.json({ id: user.id, username: user.username, role: user.role });
+      if (err) return res.status(500).json({ error: 'Session error' });
+
+      req.session.user = {
+        id: user.id,
+        username: user.username,
+        role: user.role
+      };
+
+      res.json(req.session.user);
     });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to login.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Login failed' });
   }
 });
 
 app.post('/api/logout', (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({ error: 'Failed to destroy session.' });
-    }
+  req.session.destroy(() => {
     res.clearCookie('connect.sid');
     res.json({ success: true });
   });
-});
-
-app.post('/api/change-password', auth, async (req, res) => {
-  try {
-    const { oldPassword, newPassword } = req.body;
-    if (!oldPassword || !newPassword || newPassword.length < 8) {
-      return res.status(400).json({ error: 'Old and new passwords are required; new password must be at least 8 characters.' });
-    }
-
-    const user = await db.getUserById(req.session.user.id);
-    if (!user || !bcrypt.compareSync(oldPassword, user.password)) {
-      return res.status(401).json({ error: 'Current password is incorrect.' });
-    }
-
-    const hashedPassword = bcrypt.hashSync(newPassword, 10);
-    await db.updateUserPassword(user.id, hashedPassword);
-    res.json({ success: true });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to change password.' });
-  }
 });
 
 app.get('/api/me', auth, (req, res) => {
   res.json(req.session.user);
 });
 
+/* ========================
+   QUIZ ROUTES
+======================== */
 app.get('/api/quiz-sets', auth, async (req, res) => {
   try {
     const sets = await db.getQuizSets();
     res.json(sets);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to load quiz sets.' });
+  } catch {
+    res.status(500).json({ error: 'Failed to load quiz sets' });
   }
 });
 
 app.get('/api/quiz/:setId', auth, async (req, res) => {
   try {
     const setId = Number(req.params.setId);
+
     const set = await db.getQuizSetById(setId);
-    if (!set) {
-      return res.status(404).json({ error: 'Quiz set not found.' });
-    }
+    if (!set) return res.status(404).json({ error: 'Not found' });
 
     const questions = await db.getQuestionsBySetId(setId);
+
     req.session.quizState = {
       setId,
       startedAt: Date.now(),
-      questionCount: questions.length,
       maxDurationMs: questions.length * QUESTION_TIMEOUT_SECONDS * 1000
     };
 
-    const sanitizedQuestions = questions.map((question) => ({
-      id: question.id,
-      prompt: question.prompt,
-      option_a: question.option_a,
-      option_b: question.option_b,
-      option_c: question.option_c,
-      option_d: question.option_d
-    }));
-
-    res.json({ set, questions: sanitizedQuestions });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to load quiz.' });
+    res.json({
+      set,
+      questions: questions.map(q => ({
+        id: q.id,
+        prompt: q.prompt,
+        option_a: q.option_a,
+        option_b: q.option_b,
+        option_c: q.option_c,
+        option_d: q.option_d
+      }))
+    });
+  } catch {
+    res.status(500).json({ error: 'Failed to load quiz' });
   }
 });
 
 app.post('/api/submit-quiz', auth, async (req, res) => {
   try {
     const { setId, answers } = req.body;
-    if (!setId || !Array.isArray(answers)) {
-      return res.status(400).json({ error: 'Invalid payload.' });
-    }
 
     const state = req.session.quizState;
     if (!state || state.setId !== setId) {
-      return res.status(400).json({ error: 'Quiz session not started correctly.' });
-    }
-
-    const elapsedMs = Date.now() - state.startedAt;
-    if (elapsedMs > state.maxDurationMs) {
-      req.session.quizState = null;
-      return res.status(400).json({ error: 'Quiz timed out.' });
+      return res.status(400).json({ error: 'Invalid session' });
     }
 
     const questions = await db.getQuestionsBySetId(setId);
-    if (!questions.length) {
-      return res.status(400).json({ error: 'Quiz set not found.' });
-    }
+    const map = Object.fromEntries(questions.map(q => [q.id, q.answer]));
 
-    const questionMap = Object.fromEntries(questions.map((q) => [q.id, q.answer]));
-    let correct_count = 0;
-    answers.forEach((item) => {
-      const expected = questionMap[item.questionId];
-      if (expected && item.answer === expected) correct_count += 1;
+    let correct = 0;
+    answers.forEach(a => {
+      if (map[a.questionId] === a.answer) correct++;
     });
-    const score = correct_count * 10;
 
-    const attempt = await db.insertQuizAttempt(req.session.user.id, setId, score, correct_count);
-    for (const item of answers) {
-      const expected = questionMap[item.questionId];
-      const correct = expected && item.answer === expected ? 1 : 0;
-      await db.insertQuizAnswer(attempt.id, item.questionId, item.answer || null, correct);
+    const score = correct * 10;
+
+    const attempt = await db.insertQuizAttempt(
+      req.session.user.id,
+      setId,
+      score,
+      correct
+    );
+
+    for (const a of answers) {
+      await db.insertQuizAnswer(
+        attempt.id,
+        a.questionId,
+        a.answer || null,
+        map[a.questionId] === a.answer
+      );
     }
 
     req.session.quizState = null;
-    res.json({ score, correct_count, total_questions: questions.length });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to submit quiz.' });
+
+    res.json({
+      score,
+      correct_count: correct,
+      total_questions: questions.length
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Submit failed' });
   }
 });
 
+/* ========================
+   LEADERBOARD
+======================== */
 app.get('/api/leaderboard', auth, async (req, res) => {
   try {
     const rows = await db.getLeaderboard();
     res.json(rows);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to load leaderboard.' });
+  } catch {
+    res.status(500).json({ error: 'Failed leaderboard' });
   }
 });
 
+/* ========================
+   ADMIN ROUTES
+======================== */
 app.get('/api/admin/attempts', auth, adminOnly, async (req, res) => {
   try {
     const attempts = await db.getAdminAttempts();
     const details = await db.getAdminAttemptDetails();
     res.json({ attempts, details });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to load admin attempts.' });
-  }
-});
-
-app.get('/api/admin/quiz-sets', auth, adminOnly, async (req, res) => {
-  try {
-    const sets = await db.getQuizSets();
-    res.json(sets);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to load admin quiz sets.' });
+  } catch {
+    res.status(500).json({ error: 'Admin load failed' });
   }
 });
 
 app.post('/api/admin/quiz-sets', auth, adminOnly, async (req, res) => {
   try {
     const { title, questions } = req.body;
-    if (!title || !Array.isArray(questions) || questions.length === 0) {
-      return res.status(400).json({ error: 'Title and questions are required.' });
-    }
 
     const set = await db.insertQuizSet(title);
-    for (const question of questions) {
-      await db.insertQuestion(set.id, {
-        prompt: question.prompt || '',
-        option_a: question.option_a || '',
-        option_b: question.option_b || '',
-        option_c: question.option_c || '',
-        option_d: question.option_d || '',
-        answer: question.answer || ''
-      });
+
+    for (const q of questions) {
+      await db.insertQuestion(set.id, q);
     }
 
-    res.json({ success: true, setId: set.id });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to create quiz set.' });
+    res.json({ success: true });
+  } catch {
+    res.status(500).json({ error: 'Create failed' });
   }
 });
 
@@ -288,23 +267,28 @@ app.post('/api/admin/leaderboard/reset', auth, adminOnly, async (req, res) => {
   try {
     await db.resetLeaderboard();
     res.json({ success: true });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to reset leaderboard.' });
+  } catch {
+    res.status(500).json({ error: 'Reset failed' });
   }
 });
 
+/* ========================
+   FRONTEND ROUTE
+======================== */
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+/* ========================
+   START SERVER
+======================== */
 db.init()
   .then(() => {
     app.listen(port, () => {
-      console.log(`Quiz app running at http://localhost:${port}`);
+      console.log(`Server running on port ${port}`);
     });
   })
-  .catch((err) => {
-    console.error('Failed to initialize database', err);
+  .catch(err => {
+    console.error('DB init failed', err);
     process.exit(1);
   });
